@@ -50,6 +50,19 @@ def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db)
 def get_students(db: Session = Depends(get_db)):
     return db.query(models.Student).all()
 
+@app.get("/students/{student_id}")
+def get_student(student_id: int, db: Session = Depends(get_db)):
+    student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    return student
+
+@app.get("/students/search/")
+def search_student(name: str, db: Session = Depends(get_db)):
+    return db.query(models.Student).filter(models.Student.name == name).all()
+
 @app.delete("/students/{student_id}")
 def delete_student(student_id: int, db: Session = Depends(get_db)):
     student = db.query(models.Student).filter(models.Student.id == student_id).first()
@@ -109,3 +122,30 @@ def enroll_student(student_id: int, course_id: int, db: Session = Depends(get_db
     db.commit()
 
     return {"message": "Student enrolled in course"}
+
+# ---------------- PROFILE ----------------
+@app.post("/profiles/")
+def create_profile(student_id: int, bio: str, age: int, db: Session = Depends(get_db)):
+    # Проверяем, существует ли студент
+    student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    # Проверяем, нет ли уже профиля у этого студента
+    existing_profile = db.query(models.Profile).filter(models.Profile.student_id == student_id).first()
+    
+    if existing_profile:
+        raise HTTPException(status_code=400, detail="Profile already exists for this student")
+    
+    profile = models.Profile(
+        student_id=student_id,
+        bio=bio,
+        age=age
+    )
+    
+    db.add(profile)
+    db.commit()
+    db.refresh(profile)
+    
+    return profile
