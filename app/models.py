@@ -18,6 +18,10 @@ class Teacher(Base):
 
     # One-to-Many (Teacher -> Courses)
     courses = relationship("Course", back_populates="teacher")
+    
+    # ✅ ДОБАВЛЕНО: связь с Department
+    department_id = Column(Integer, ForeignKey("departments.id"))
+    department = relationship("Department", back_populates="teachers")
 
 
 class Course(Base):
@@ -44,6 +48,7 @@ class Student(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True)
+    email = Column(String, unique=True, nullable=False)  # добавлено поле email
 
     # Many-to-Many с курсами
     courses = relationship(
@@ -61,8 +66,18 @@ class Profile(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     bio = Column(String)
-    age = Column(Integer)
+    age = Column(String)  # изменено с Integer на String
 
     student_id = Column(Integer, ForeignKey("students.id"), unique=True)
 
     student = relationship("Student", back_populates="profile")
+
+
+class Department(Base):
+    __tablename__ = "departments"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    
+    # ✅ ДОБАВЛЕНО: связь с Teacher
+    teachers = relationship("Teacher", back_populates="department")
